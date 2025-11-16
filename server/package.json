@@ -1,0 +1,29 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon --ignore rooms-state.json --ignore \"db/**/*\" server.js",
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "mongodb": "^7.0.0",
+    "uuid": "^11.1.0",
+    "ws": "^8.18.3",
+    "y-leveldb": "^0.2.0",
+    "y-websocket": "https://github.com/yjs/y-websocket/archive/refs/tags/v1.5.3.tar.gz",
+    "yjs": "^13.6.27"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}
