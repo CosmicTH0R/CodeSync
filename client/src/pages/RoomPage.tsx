@@ -21,6 +21,7 @@ import {
 
 import LeftPaneTabs from '../components/LeftPaneTabs'
 import CodePane from '../components/CodePane'
+import Modal from '../components/Modal'
 import { useTheme } from '../context/ThemeContext'
 import { api } from '../lib/api'
 import type {
@@ -65,6 +66,13 @@ const RoomPage: React.FC = () => {
   )
   const [isSavingSubmission, setIsSavingSubmission] = useState(false)
   const isCreator = Boolean(locationState.isCreator)
+
+  // Modal state for language switch confirmation
+  const [showLanguageModal, setShowLanguageModal] = useState(false)
+  const [pendingLanguage, setPendingLanguage] = useState<SupportedLanguage | null>(null)
+
+  // Modal state for reset confirmation
+  const [showResetModal, setShowResetModal] = useState(false)
 
   const { theme, setTheme } = useTheme()
   const [language, setLanguage] = useState<SupportedLanguage>(
@@ -209,13 +217,61 @@ const RoomPage: React.FC = () => {
     const starter = roomDetails.starterCode[language]
     if (!starter) return
 
-    const confirmed = window.confirm('Are you sure you want to reset the code to starter? This cannot be undone.')
-    if (!confirmed) return
+    setShowResetModal(true)
+  }
+
+  const confirmReset = () => {
+    if (!roomDetails) return
+    const starter = roomDetails.starterCode[language]
+    if (!starter) return
 
     ydoc.transact(() => {
       yCode.delete(0, yCode.length)
       yCode.insert(0, starter)
     })
+  }
+
+  const handleLanguageChange = (newLanguage: SupportedLanguage) => {
+    if (!roomDetails) {
+      setLanguage(newLanguage)
+      return
+    }
+
+    const currentCode = yCode.toString().trim()
+    const newStarter = roomDetails.starterCode[newLanguage] ?? ''
+    
+    // Only ask if there's code and it's different from the new language's starter
+    if (currentCode && currentCode !== newStarter.trim()) {
+      // Show modal to confirm
+      setPendingLanguage(newLanguage)
+      setShowLanguageModal(true)
+    } else if (!currentCode && newStarter) {
+      // If editor is empty, just load the starter code
+      ydoc.transact(() => {
+        yCode.delete(0, yCode.length)
+        yCode.insert(0, newStarter)
+      })
+      setLanguage(newLanguage)
+    } else {
+      setLanguage(newLanguage)
+    }
+  }
+
+  const confirmLanguageSwitch = (loadTemplate: boolean) => {
+    if (!pendingLanguage || !roomDetails) return
+    
+    if (loadTemplate) {
+      const newStarter = roomDetails.starterCode[pendingLanguage] ?? ''
+      if (newStarter) {
+        ydoc.transact(() => {
+          yCode.delete(0, yCode.length)
+          yCode.insert(0, newStarter)
+        })
+      }
+    }
+    
+    setLanguage(pendingLanguage)
+    setPendingLanguage(null)
   }
 
   const refreshSubmissions = useCallback(async () => {
@@ -371,10 +427,39 @@ const RoomPage: React.FC = () => {
           awareness={awareness}
           theme={theme}
           language={language}
-          onLanguageChange={setLanguage}
+          onLanguageChange={handleLanguageChange}
           onResetToStarter={handleResetToStarter}
         />
       </Split>
+
+      {/* Language Switch Confirmation Modal */}
+      <Modal
+        isOpen={showLanguageModal}
+        onClose={() => {
+          // User cancelled - just change syntax, keep code
+          if (pendingLanguage) {
+            setLanguage(pendingLanguage)
+          }
+          setShowLanguageModal(false)
+          setPendingLanguage(null)
+        }}
+        onConfirm={() => confirmLanguageSwitch(true)}
+        title={`Switch to ${pendingLanguage?.toUpperCase() ?? 'New Language'}?`}
+        message={`Do you want to load the ${pendingLanguage} starter template?\n\nThis will replace your current code.`}
+        confirmText="Load Template"
+        cancelText="Keep My Code"
+      />
+
+      {/* Reset Code Confirmation Modal */}
+      <Modal
+        isOpen={showResetModal}
+        onClose={() => setShowResetModal(false)}
+        onConfirm={confirmReset}
+        title="Reset to Starter Code?"
+        message="Are you sure you want to reset the code to the starter template?\n\nThis action cannot be undone."
+        confirmText="Reset Code"
+        cancelText="Cancel"
+      />
     </div>
   )
 }

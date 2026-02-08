@@ -14,10 +14,38 @@ export const buildRoomPayload = ({ roomId, createdBy, title }) => ({
   },
   defaultLanguage: 'cpp',
   starterCode: {
-    cpp: '',
-    javascript: '',
-    python: '',
-    java: ''
+    cpp: `// Your First C++ Program
+
+#include <iostream>
+
+int main() {
+    std::cout << "Hello World!";
+    return 0;
+}`,
+    javascript: `// Your First JavaScript Program
+
+function solution(input) {
+    // Write your solution here
+    console.log("Hello World!");
+}
+
+solution();`,
+    python: `# Your First Python Program
+
+def solution():
+    # Write your solution here
+    print("Hello World!")
+
+if __name__ == "__main__":
+    solution()`,
+    java: `// Your First Java Program
+
+public class Main {
+    public static void main(String[] args) {
+        // Write your solution here
+        System.out.println("Hello World!");
+    }
+}`
   },
   defaultTestCases: '',
   submissions: []
